@@ -1,0 +1,37 @@
+# --- Environment & Secrets ---
+.env
+*.env
+!.env.example
+*.pem
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# --- Node / Frontend ---
+node_modules/
+aegis-ui/dist/
+aegis-ui/tsconfig.tsbuildinfo
+npm-debug.log*
+
+# --- Docker / Data / Generated Output ---
+qdrant_storage/
+artifacts/*.pdf
+!artifacts/.gitkeep
+
+# --- Test fixtures: keep the ground-truth sample contracts, ignore everything else ---
+*.pdf
+!sample_corporate_msa.pdf
+!sample_employee_data_agreement.pdf
+
+# --- IDE / OS ---
+.DS_Store
+.vscode/
+.idea/
+.claude/

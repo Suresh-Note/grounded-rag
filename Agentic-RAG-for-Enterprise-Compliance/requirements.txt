@@ -1,0 +1,23 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+python-dotenv
+python-multipart
+qdrant-client
+redis
+psutil
+PyMuPDF
+torch
+sentence-transformers
+langgraph
+langchain-core
+langchain-community
+langchain-ollama
+pypdf
+langchain-text-splitters
+reportlab
+streamlit
+celery>=5.3.6
+pytest>=8.0.0

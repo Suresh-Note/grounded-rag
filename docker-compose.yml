@@ -1,0 +1,86 @@
+﻿services:
+  redis:
+    image: redis:7-alpine
+    container_name: aegis_redis
+    ports:
+      - "6379:6379"
+    restart: always
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: aegis_qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    restart: always
+
+  api:
+    build:
+      context: ./Agentic-RAG-for-Enterprise-Compliance
+      dockerfile: Dockerfile
+    container_name: aegis_api
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - LOCAL_LLM_MODEL=llama3.2:3b
+      - ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:8000
+    volumes:
+      - ./artifacts:/app/artifacts
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - redis
+      - qdrant
+    restart: always
+
+  celery_worker:
+    build:
+      context: ./Agentic-RAG-for-Enterprise-Compliance
+      dockerfile: Dockerfile
+    container_name: aegis_celery
+    command: python -m celery -A src.api.celery_app worker --loglevel=info --pool=solo
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - LOCAL_LLM_MODEL=llama3.2:3b
+    volumes:
+      - ./artifacts:/app/artifacts
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - redis
+      - qdrant
+      - api
+    restart: always
+    healthcheck:
+      # Overrides the Dockerfile's `curl :8000/health` check, which this
+      # service can never pass — it runs a Celery worker, not the API server.
+      test: ["CMD-SHELL", "python -m celery -A src.api.celery_app inspect ping || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  ui:
+    build:
+      context: ./aegis-ui
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:8000
+    container_name: aegis_ui
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: always
+
+volumes:
+  qdrant_storage:
