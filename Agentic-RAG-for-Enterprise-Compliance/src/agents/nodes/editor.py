@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import concurrent.futures
 import logging
-from typing import List
 
 from langchain_core.prompts import ChatPromptTemplate
 from pydantic import BaseModel, Field
@@ -24,12 +25,12 @@ SYSTEM_PROMPT = (
 
 
 class ConflictGroup(BaseModel):
-    indices: List[int] = Field(..., description="0-based indices of findings that refer to the same clause/evidence.")
+    indices: list[int] = Field(..., description="0-based indices of findings that refer to the same clause/evidence.")
     reason: str = Field(..., description="Brief reason these are the same underlying clause.")
 
 
 class ConsistencyReview(BaseModel):
-    duplicate_groups: List[ConflictGroup] = Field(default_factory=list)
+    duplicate_groups: list[ConflictGroup] = Field(default_factory=list)
 
 
 def _status_of(f: dict) -> str:

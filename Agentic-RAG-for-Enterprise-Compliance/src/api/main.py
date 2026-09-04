@@ -107,9 +107,9 @@ app.add_middleware(
 
 
 class AuditRequest(BaseModel):
-    raw_query: str = Field(..., example="Audit contract for GDPR Chapter V cross-border transfer violations.")
-    jurisdiction: str = Field("European Union", example="European Union")
-    document_name: str = Field(..., example="Uploaded_Contract.pdf")
+    raw_query: str = Field(..., json_schema_extra={"example": "Audit contract for GDPR Chapter V cross-border transfer violations."})
+    jurisdiction: str = Field("European Union", json_schema_extra={"example": "European Union"})
+    document_name: str = Field(..., json_schema_extra={"example": "Uploaded_Contract.pdf"})
     execution_year: int = Field(2026)
     max_retries: int = Field(default=settings.MAX_AUDIT_RETRIES)
 

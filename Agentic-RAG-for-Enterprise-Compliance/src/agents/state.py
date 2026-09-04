@@ -1,46 +1,38 @@
-from typing import Any, Dict, List, Optional, TypedDict
+from __future__ import annotations
+
+from typing import Any, TypedDict
 
 from src.agents.schemas import ComplianceFinding
 
 
 class ComplianceState(TypedDict):
     """
-    Unified transactional state for the Aegis multi-agent graph.
+    Unified transactional state for the multi-agent graph.
 
-    Design notes (this is the piece that fixes the state-leak bug in the
-    original implementation):
-
-    - `current_context` holds ONLY the retrieval slice for the sub-task
-      currently being worked on. It is reset every time a sub-task is
-      finalized. The Auditor and Critic only ever see this slice, never the
-      full accumulated history — this keeps prompts small and prevents one
-      sub-task's context from contaminating another's verdict.
-    - `retrieved_contexts` is a separate, append-only audit trail of every
-      chunk retrieved across the whole run. It exists purely for citation
-      traceability and is never fed back into an LLM prompt.
-    - `validated_drafts` receives exactly ONE finalized entry per sub-task —
-      either a critic-passed finding set, or a retry-exhausted one explicitly
-      flagged `unresolved_after_retries`. Failed intermediate attempts are
-      discarded by the finalize node, so hallucinated drafts can never leak
-      into the final report as duplicates.
+    - `current_context` holds ONLY the retrieval slice for the active sub-task.
+      Reset each finalize step to prevent cross-contamination between sub-tasks.
+    - `retrieved_contexts` is append-only — an audit trail of every chunk retrieved,
+      never fed back into an LLM prompt.
+    - `validated_drafts` receives one finalized entry per sub-task (critic-passed or
+      retry-exhausted); intermediate attempts are discarded by finalize.
     """
 
     request_id: str
     raw_query: str
-    contract_meta: Dict[str, Any]
+    contract_meta: dict[str, Any]
 
-    audit_plan: List[str]
+    audit_plan: list[str]
     current_step: int
     retry_count: int
     max_retries: int
 
-    current_context: List[Dict[str, Any]]
-    retrieved_contexts: List[Dict[str, Any]]
+    current_context: list[dict[str, Any]]
+    retrieved_contexts: list[dict[str, Any]]
 
-    current_findings: List[ComplianceFinding]
-    validated_drafts: List[Dict[str, Any]]
+    current_findings: list[ComplianceFinding]
+    validated_drafts: list[dict[str, Any]]
 
-    critic_feedback: Optional[str]
+    critic_feedback: str | None
     verification_passed: bool
 
-    final_compliance_report: Dict[str, Any]
+    final_compliance_report: dict[str, Any]

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from typing import Any
 
@@ -18,16 +20,11 @@ def critic_node(state: ComplianceState) -> dict:
     current_retry = state.get("retry_count", 0)
     current_step = state.get("current_step", 0)
     model_target = safe_inference_target()
-    logger.info(
-        "Executing NODE 4 (Critic Guardrail) | Step Index: %s | Active Retry Index: %s | target=%s",
-        current_step,
-        current_retry,
-        model_target.model_name,
-    )
+    logger.info("NODE 4: critic — step %s, retry %s, target=%s", current_step, current_retry, model_target.model_name)
 
     findings = state.get("current_findings", [])
     if not findings:
-        logger.warning("No findings present in the current execution state buffer.")
+        logger.warning("No findings to verify.")
         return {
             "critic_feedback": "Empty findings state. Re-evaluate context chunks and extract grounded entries.",
             "verification_passed": False,

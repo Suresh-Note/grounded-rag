@@ -79,25 +79,17 @@ def _checkpointed_node(name: str, node_fn: Callable[[ComplianceState], dict]) ->
 
 def route_after_critic(state: ComplianceState) -> str:
     if state.get("verification_passed", False):
-        logger.info("[ROUTER] Critic validation passed -> Proceeding to finalize_step.")
+        logger.info("Critic passed -> finalize_step")
         return "finalize_step"
 
     retry_count = state.get("retry_count", 0)
     max_retries = state.get("max_retries", 2)
 
     if retry_count >= max_retries:
-        logger.warning(
-            "[ROUTER] Max retries exhausted (%s/%s) for current task -> Forcing progression to finalize_step.",
-            retry_count,
-            max_retries,
-        )
+        logger.warning("Max retries exhausted (%s/%s) -> finalize_step", retry_count, max_retries)
         return "finalize_step"
 
-    logger.info(
-        "[ROUTER] Critic validation failed (%s/%s retries used) -> Directing retry loop back to Auditor.",
-        retry_count,
-        max_retries,
-    )
+    logger.info("Critic failed (%s/%s retries) -> retry auditor", retry_count, max_retries)
     return "retry_audit"
 
 
@@ -105,12 +97,12 @@ def route_after_finalize(state: ComplianceState) -> str:
     current_step = state.get("current_step", 0)
     audit_plan = state.get("audit_plan", [])
 
-    logger.info("[ROUTER] Step Evaluation: index %s of %s total tasks.", current_step, len(audit_plan))
+    logger.info("Step %s of %s", current_step, len(audit_plan))
 
     if current_step < len(audit_plan):
         return "retrieve"
 
-    logger.info("[ROUTER] All audit plan items processed -> Moving to final report generation.")
+    logger.info("All sub-tasks done -> generating report")
     return "generate_report"
 
 
@@ -151,5 +143,5 @@ def build_compliance_graph() -> StateGraph:
 
         return workflow.compile()
     except Exception as exc:
-        logger.critical("Critical error encountered during LangGraph compilation topology: %s", exc)
+        logger.critical("LangGraph compilation failed: %s", exc)
         raise RuntimeError(f"LangGraph initialization failure: {exc}") from exc

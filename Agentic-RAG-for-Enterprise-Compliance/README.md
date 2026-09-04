@@ -114,7 +114,7 @@ GroundedRAG approaches this differently. Instead of a single prompt-and-return p
 | Cross-Task Consistency | Consistency Editor pass | One final LLM pass groups duplicate findings across independent sub-tasks; the actual keep/merge decision stays deterministic code, never an LLM rewrite of evidence |
 | Backend | FastAPI + Uvicorn | Async execution built for enterprise REST endpoints and streaming agent logs |
 | Job Queue | Celery + Redis | Long-running audits run off the request thread; job state and live progress persist and stream via SSE |
-| Frontend | React + Vite (`aegis-ui`) | Master-detail findings inspector with live pipeline progress over a real SSE connection |
+| Frontend | React + Vite (`aegis-ui`) | Component-based master-detail findings inspector with keyboard navigation, loading skeletons, responsive mobile layout, and live pipeline progress over SSE |
 | API Hardening | Opt-in key auth + upload caps | `API_KEY` env var gates write endpoints when set; uploads capped at `MAX_UPLOAD_SIZE_MB`; stale report PDFs swept on startup |
 
 <br/>
@@ -135,6 +135,8 @@ Rather than claim accuracy, `src/eval/run_accuracy_eval.py` measures it: it runs
 **Zero cross-finding contradictions** in both runs — the `finalize.py` reconciliation and the Consistency Editor pass are doing their job.
 
 **2 of 4 known violations missed**, and the reason is worth stating plainly rather than hiding: clause-boundary chunking means each clause is now retrieved once instead of being fragmented and re-retrieved 2-3 times. That's exactly why contradictions dropped to zero — but it also removes the redundancy that previously gave the Auditor multiple independent chances to successfully quote a clause. If its one attempt at an exact quote fails fuzzy verification, the finding is marked `UNVERIFIED_EVIDENCE` (flagged for human review, never silently dropped) rather than retried against a different phrasing of the same evidence. That's a real, open trade-off between deduplication and retry redundancy — not a solved problem.
+
+**A note on model size:** These results use `llama3.2:3b` (~2 GB), a model small enough to run on consumer hardware with limited RAM. The architecture is model-agnostic — the LLM is a pluggable component behind `src/inference/gateway.py`. A larger model (e.g. `llama3.3:70b`, Mixtral, or a cloud API) would improve the Auditor's ability to produce exact verbatim quotes on the first attempt, directly increasing the catch rate without any code changes. The graph, retrieval pipeline, verification loop, and deduplication logic are the invariant parts; the model is the variable.
 
 <br/>
 
@@ -239,8 +241,14 @@ together — lives one directory up.
 
 ```
 Agentic_AI_Project/
+├── .github/workflows/tests.yml  # CI: pytest + frontend lint on every push/PR
 ├── docker-compose.yml           # Orchestrates qdrant, redis, api, celery_worker, ui
-├── aegis-ui/                    # React + Vite frontend (served via nginx)
+├── aegis-ui/                    # React + Vite frontend (component-based, served via nginx)
+│   └── src/
+│       ├── App.tsx              # Root composition + state management
+│       ├── api.ts               # Typed API client (submit, poll, SSE stream)
+│       └── components/          # Header, AuditForm, PipelineProgress, ResultSummary,
+│                                # FindingsList (keyboard-navigable), FindingDetail, ui primitives
 └── Agentic-RAG-for-Enterprise-Compliance/    # <- this folder
     ├── src/
     │   ├── agents/
@@ -255,7 +263,6 @@ Agentic_AI_Project/
     │   ├── events/             # SSE event broadcaster for live job progress
     │   └── utils/              # PDF report rendering and highlighting
     ├── tests/                  # Real pytest suite — infra-free, deterministic (`pytest` to run)
-    ├── .github/workflows/      # CI: runs the pytest suite on every push/PR
     ├── generate_mock_pdf.py    # Ground-truth test contract #1 (retention + cross-border)
     ├── generate_mock_pdf_2.py  # Ground-truth test contract #2 (biometric + breach notice)
     ├── app.py                  # Legacy Streamlit dashboard (superseded by aegis-ui, kept as a lightweight fallback)

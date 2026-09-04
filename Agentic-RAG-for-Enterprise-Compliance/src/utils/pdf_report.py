@@ -1,6 +1,5 @@
-"""
-PDF Report Engine for GroundedRAG.
-"""
+from __future__ import annotations
+
 import hashlib
 import json
 import logging

@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from enum import Enum
-from typing import List, Dict, Any
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 class FindingStatus(str, Enum):
@@ -11,7 +14,7 @@ class EvidenceLocation(BaseModel):
     document_name: str = Field(..., description="Document filename where evidence was found.")
     page_number: int = Field(..., description="Page number for evidence quote.")
     chunk_hash: str = Field(..., description="SHA-256 hash of source chunk.")
-    bbox: Dict[str, float] = Field(default_factory=dict, description="Bounding box coords.")
+    bbox: dict[str, float] = Field(default_factory=dict, description="Bounding box coords.")
     offset_start: int = Field(0, description="Start offset.")
     offset_end: int = Field(0, description="End offset.")
 
@@ -26,15 +29,15 @@ class ComplianceFinding(BaseModel):
     risk_score: float = Field(..., ge=0.0, le=100.0, description="Risk score.")
 
 class AuditorOutput(BaseModel):
-    findings: List[ComplianceFinding] = Field(default_factory=list)
+    findings: list[ComplianceFinding] = Field(default_factory=list)
 
 class CriticVerification(BaseModel):
     passed: bool = Field(..., description="True if grounded.")
-    issues: List[str] = Field(default_factory=list, description="Itemized failure reasons.")
+    issues: list[str] = Field(default_factory=list, description="Itemized failure reasons.")
     feedback: str = Field(..., description="Correction instructions.")
 
 class AuditPlan(BaseModel):
-    sub_queries: List[str] = Field(..., description="Search sub-queries.")
+    sub_queries: list[str] = Field(..., description="Search sub-queries.")
 
 class AuditReportMetadata(BaseModel):
     job_id: str = Field(..., description="Unique job ID.")

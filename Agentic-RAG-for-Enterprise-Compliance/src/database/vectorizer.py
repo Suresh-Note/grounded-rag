@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import hashlib
 import logging
 import uuid
-from typing import List
 
 from langchain_ollama import OllamaEmbeddings
 from qdrant_client.http import models
@@ -17,7 +18,7 @@ def get_embedding_engine() -> OllamaEmbeddings:
     return OllamaEmbeddings(base_url=settings.OLLAMA_BASE_URL, model=settings.LOCAL_EMBED_MODEL)
 
 
-def _validate_dim(vector: List[float]) -> List[float]:
+def _validate_dim(vector: list[float]) -> list[float]:
     if len(vector) != settings.EMBEDDING_DIM:
         raise RuntimeError(
             f"Embedding model returned {len(vector)} dims, expected {settings.EMBEDDING_DIM}. "

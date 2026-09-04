@@ -1,5 +1,7 @@
-import re
+from __future__ import annotations
+
 import logging
+import re
 from src.agents.state import ComplianceState
 
 logger = logging.getLogger("aegis.finalize")
@@ -37,9 +39,9 @@ def finalize_step_node(state: ComplianceState) -> dict:
     increments the system task index, and clears tracking states for the next loop.
     """
     current_idx = state.get("current_step", 0)
-    logger.info("Executing NODE 5 (State Finalizer Matrix) | Committing task slice index: %s", current_idx)
+    logger.info("NODE 5: finalize — committing step %s", current_idx)
 
-    # 1. Thread-safe extraction of historical trace metrics
+    # 1. Extract current findings and history
     current_findings = state.get("current_findings", [])
     validated_drafts = list(state.get("validated_drafts", []))
 
@@ -56,8 +58,7 @@ def finalize_step_node(state: ComplianceState) -> dict:
             f_dict["unresolved_after_retries"] = True
         committable.append(f_dict)
 
-    # 3. Flush current working data layer directly to the database master ledger pool,
-    # reconciling any finding that refers to the same clause a prior sub-task already judged.
+    # 3. Commit findings, reconciling duplicates that refer to the same clause.
     if committable:
         key_to_index = {
             _clause_identity_key(f): idx
@@ -89,16 +90,15 @@ def finalize_step_node(state: ComplianceState) -> dict:
 
         unresolved_count = sum(1 for f in validated_drafts if f.get("unresolved_after_retries"))
         logger.info(
-            "Committed %s new unique findings (%s conflicting duplicates reconciled, %s unresolved-after-retry) "
-            "into master ledger store.",
+            "Committed %s findings (%s conflicts reconciled, %s unresolved)",
             added_count,
             reconciled_count,
             unresolved_count,
         )
     else:
-        logger.warning("Finalization step triggered with no active findings inside the state frame buffer.")
+        logger.warning("Finalization step triggered with no active findings.")
 
-    # 3. Compile fresh configuration map to shift graph scope smoothly
+    # 4. Reset state for the next sub-task
     return {
         "validated_drafts": validated_drafts,
         "current_step": current_idx + 1,

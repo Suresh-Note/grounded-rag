@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import logging
-from typing import List
 
 from src.agents.state import ComplianceState
 from src.config import get_settings
