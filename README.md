@@ -239,6 +239,9 @@ python -m src.eval.run_accuracy_eval
 grounded-rag/
 ├── .github/workflows/tests.yml  # CI: pytest + frontend lint on every push/PR
 ├── docker-compose.yml           # Orchestrates qdrant, redis, api, celery_worker, ui
+├── requirements.txt             # Root-level pin, mirrors the backend's dependencies
+├── .env.example                 # Template for OLLAMA_*, QDRANT_*, REDIS_URL, chunking/retrieval settings
+├── launch.ps1 / aegis.bat       # Windows launch scripts: bootstrap Ollama + Docker stack, interactive menu
 ├── aegis-ui/                    # React + Vite frontend (served via nginx)
 │   └── src/
 │       ├── App.tsx              # Root composition + state management
